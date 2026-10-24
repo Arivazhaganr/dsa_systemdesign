@@ -1,0 +1,9 @@
+{
+  "name": "algoquest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive DSA and system design learner",
+  "scripts": {
+    "start": "npx --yes http-server -p 8000 -c-1 -o"
+  }
+}

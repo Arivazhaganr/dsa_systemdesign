@@ -10,7 +10,16 @@ XP, levels, a daily streak and a mixed "Daily challenge" are saved in your brows
 
 ## Run it
 
-No install, no build. Just open `index.html` in any modern browser (double-click it).
+No build step. Either open `index.html` directly, or serve it on **http://localhost:8000**:
+
+| How | Command |
+|---|---|
+| Windows | double-click `start.bat` (uses Python, or Node if no Python) |
+| macOS / Linux | `./start.sh` |
+| Python | `python -m http.server 8000` |
+| Node.js | `npm start` |
+
+Then visit http://localhost:8000. Stop the server with Ctrl+C.
 
 ## Structure
 
