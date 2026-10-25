@@ -109,13 +109,23 @@
     Quiz(box, shuffle(pool).slice(0, 10), { onDone: () => go("#/") });
   }
 
+  /* Visit counting: one GoatCounter page view per topic (tabs are not counted separately) */
+  let lastTracked = null;
+  function track(path, title, tries = 0) {
+    if (path === lastTracked) return;
+    const gc = window.goatcounter;
+    if (!gc || !gc.count) { if (tries < 20) setTimeout(() => track(path, title, tries + 1), 500); return; }
+    lastTracked = path;
+    gc.count({ path, title });
+  }
+
   function route() {
     Player.stopAll(); Timers.clearAll();
     clear(main); main.scrollTop = 0; sidebar.classList.remove("open");
     const parts = location.hash.replace(/^#\/?/, "").split("/");
-    if (parts[0] === "t") { topic(parts[1], parts[2]); renderNav(parts[1]); }
-    else if (parts[0] === "challenge") { challenge(parts[1] || "all"); renderNav("challenge"); }
-    else { home(); renderNav(); }
+    if (parts[0] === "t" && byId(parts[1])) { topic(parts[1], parts[2]); renderNav(parts[1]); track(`/t/${parts[1]}`, byId(parts[1]).title); }
+    else if (parts[0] === "challenge") { challenge(parts[1] || "all"); renderNav("challenge"); track(`/challenge/${parts[1] || "all"}`, "Daily challenge"); }
+    else { home(); renderNav(); track("/", "Home"); }
     renderXP();
   }
   window.addEventListener("hashchange", route);
