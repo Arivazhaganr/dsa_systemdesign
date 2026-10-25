@@ -250,3 +250,25 @@ svg.viz .w { font-size: 12px; fill: var(--muted); }
   .menu-btn { display: block; position: fixed; top: 12px; left: 12px; z-index: 60; }
   .viz-split, .two-col { grid-template-columns: 1fr; }
 }
+
+/* Code tab */
+pre.code { font-size: 13.5px; line-height: 1.6; max-height: 70vh; }
+.tk-k { color: #c792ea; font-weight: 600; }
+.tk-s { color: #c3e88d; }
+.tk-c { color: #7f89b5; font-style: italic; }
+.tk-n { color: #f78c6c; }
+.tk-d { color: #ffcb6b; }
+:root[data-theme="light"] .tk-k { color: #7c3aed; }
+:root[data-theme="light"] .tk-s { color: #15803d; }
+:root[data-theme="light"] .tk-c { color: #6b7280; }
+:root[data-theme="light"] .tk-n { color: #c2410c; }
+:root[data-theme="light"] .tk-d { color: #a16207; }
+
+/* Story & uses tab */
+.story-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; }
+.card.story p { margin: 8px 0 0; }
+.card.story h3 { margin: 0; font-size: 16px; }
+.card.use .ico { font-size: 26px; }
+.card.use h3 { margin: 6px 0 4px; font-size: 15px; }
+.card.use p { margin: 0; color: var(--muted); font-size: 13px; }
+@media (max-width: 900px) { .story-grid { grid-template-columns: 1fr; } }

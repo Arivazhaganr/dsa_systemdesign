@@ -74,7 +74,12 @@
     if (!t) return home();
     Store.visit(id);
     const list = L.topics, i = list.indexOf(t);
-    const tabs = [["learn", "📖 Learn"], ["visualize", "🎬 Visualize"], ["quiz", `📝 Quiz (${t.quiz.length})`], ["practice", `💪 Practice (${t.practice.length})`]];
+    const ex = (L.extras || {})[id] || {};
+    const tabs = [["learn", "📖 Learn"], ["visualize", "🎬 Visualize"],
+      L.memViz && L.memViz[id] ? ["memory", "🧠 In memory"] : null,
+      ex.code ? ["code", "💻 Code"] : null,
+      ex.story ? ["story", "📜 Story & uses"] : null,
+      ["quiz", `📝 Quiz (${t.quiz.length})`], ["practice", `💪 Practice (${t.practice.length})`]].filter(Boolean);
     const body = h("div", { class: "fade-in" });
     main.append(h("div", { class: "topic-head" }, h("span", { class: "ico", text: t.icon }), h("div", null, h("div", { class: "badge", text: TRACKS[t.track] }), h("h1", { text: t.title }))),
       h("p", { class: "topic-sub", text: t.summary }),
@@ -85,6 +90,12 @@
     } else if (tab === "visualize") {
       if (L.viz[t.viz]) L.viz[t.viz](body); else body.append(h("p", { text: "No visualizer for this topic." }));
       body.append(h("div", { class: "controls", style: { marginTop: "20px" } }, h("button", { class: "btn primary", text: "📝 Test yourself →", onclick: () => go(`#/t/${id}/quiz`) })));
+    } else if (tab === "memory" && L.memViz[id]) {
+      L.memViz[id](body);
+    } else if (tab === "code" && ex.code) {
+      codeTab(body, ex.code);
+    } else if (tab === "story" && ex.story) {
+      storyTab(body, t, ex);
     } else if (tab === "quiz") {
       Quiz(body, t.quiz, { id, onDone: () => go(`#/t/${id}/practice`) });
     } else {
@@ -98,6 +109,53 @@
     main.append(h("div", { class: "nav-foot" },
       i > 0 ? h("button", { class: "btn", text: `← ${list[i - 1].icon} ${list[i - 1].title}`, onclick: () => go(`#/t/${list[i - 1].id}`) }) : h("span"),
       i < list.length - 1 ? h("button", { class: "btn", text: `${list[i + 1].icon} ${list[i + 1].title} →`, onclick: () => go(`#/t/${list[i + 1].id}`) }) : h("span")));
+  }
+
+  /* ---------- Code tab: language switcher + tiny syntax highlighter ---------- */
+  const LANGS = [["python", "Python"], ["java", "Java"], ["typescript", "TypeScript"], ["javascript", "JavaScript"]];
+  const KW = "abstract|as|async|await|boolean|break|case|catch|char|class|const|continue|def|default|del|double|elif|else|enum|except|export|extends|false|False|final|finally|for|from|function|global|if|implements|import|in|instanceof|int|interface|is|lambda|let|long|new|nonlocal|None|not|null|or|and|private|protected|public|raise|record|return|static|super|switch|synchronized|this|throw|throws|true|True|try|type|typeof|undefined|var|void|while|with|yield";
+  const TOKENS = new RegExp(`(//[^\\n]*|#[^\\n]*|/\\*[\\s\\S]*?\\*/|"""[\\s\\S]*?"""|"(?:\\\\.|[^"\\\\\\n])*"|'(?:\\\\.|[^'\\\\\\n])*'|\\x60(?:\\\\.|[^\\x60\\\\])*\\x60)|\\b(${KW})\\b|\\b(\\d[\\d_]*(?:\\.\\d+)?(?:e\\d+)?)\\b|(@\\w+)`, "g");
+  const esc = (x) => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function highlight(code, lang) {
+    let out = "", last = 0;
+    code.replace(TOKENS, (m, str, kw, num, deco, off) => {
+      out += esc(code.slice(last, off)); last = off + m.length;
+      let cls = str ? (/^(\/\/|#|\/\*)/.test(str) ? "tk-c" : "tk-s") : kw ? "tk-k" : num ? "tk-n" : "tk-d";
+      if (str && str[0] === "#" && lang !== "python") cls = "tk-p";   // '#' isn't a comment outside Python
+      if (str && str.startsWith("//") && lang === "python") cls = "tk-p";
+      out += cls === "tk-p" ? esc(m) : `<span class="${cls}">${esc(m)}</span>`;
+      return m;
+    });
+    return out + esc(code.slice(last));
+  }
+  function codeTab(body, code) {
+    let lang = "python";
+    try { lang = localStorage.getItem("dsaLearner.lang") || lang; } catch (e) {}
+    if (!code[lang]) lang = LANGS.find(([k]) => code[k])[0];
+    const pre = h("pre", { class: "code" });
+    const copy = h("button", { class: "btn small", text: "📋 Copy" });
+    const bar = h("div", { class: "controls" });
+    function show(k) {
+      lang = k;
+      try { localStorage.setItem("dsaLearner.lang", k); } catch (e) {}
+      clear(bar).append(...LANGS.filter(([key]) => code[key]).map(([key, name]) => h("button", { class: "btn small" + (key === k ? " primary" : ""), text: name, onclick: () => show(key) })), h("div", { class: "spacer" }), copy);
+      pre.innerHTML = highlight(code[k], k);
+    }
+    copy.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(code[lang]).then(() => L.toast("Copied!")); };
+    body.append(h("p", { class: "topic-sub", text: "The same idea in four languages. Your language choice is remembered across topics." }), bar, pre);
+    show(lang);
+  }
+
+  /* ---------- Story & uses tab ---------- */
+  function storyTab(body, t, ex) {
+    const st = ex.story;
+    body.append(h("div", { class: "story-grid" },
+      h("div", { class: "card story" }, h("div", { class: "badge", text: "🗓️ When" }), h("p", { html: st.when })),
+      h("div", { class: "card story" }, h("div", { class: "badge", text: "👩‍🔬 Who" }), h("p", { html: st.who }))),
+      h("div", { class: "card story", style: { marginTop: "14px" } }, h("h3", { text: "⏪ What people did before" }), h("p", { html: st.before })),
+      h("div", { class: "card story", style: { marginTop: "14px" } }, h("h3", { text: `💡 Why ${t.title.replace(/^Case Study: /, "")} was created` }), h("p", { html: st.why })),
+      h("h2", { text: "🌍 Where it's used today", style: { marginTop: "26px" } }),
+      h("div", { class: "grid" }, (ex.uses || []).map(([icon, name, desc]) => h("div", { class: "card use" }, h("div", { class: "ico", text: icon }), h("h3", { text: name }), h("p", { text: desc })))));
   }
 
   function challenge(track) {
