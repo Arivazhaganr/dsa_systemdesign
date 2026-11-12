@@ -266,6 +266,7 @@
     function finish(prog) {
       const pct = Math.round((score / qs.length) * 100);
       const xp = score * 10 + (pct === 100 ? 20 : 0);
+      const missed = qs.filter((_, k) => !results[k]);
       Store.addXP(xp);
       if (id) Store.recordQuiz(id, score, qs.length);
       if (pct >= 80) confetti();
@@ -275,7 +276,12 @@
         h("p", { class: "badge good", text: `+${xp} XP` }),
         h("div", { class: "controls", style: { justifyContent: "center", marginTop: "14px" } },
           h("button", { class: "btn primary", text: "↻ Retry", onclick: () => { i = 0; score = 0; results.length = 0; render(); } }),
-          onDone ? h("button", { class: "btn", text: "Continue", onclick: onDone }) : null))));
+          onDone ? h("button", { class: "btn", text: "Continue", onclick: onDone }) : null)),
+        // Review: every question that was answered wrong, with the right answer and why
+        missed.length ? h("div", { class: "card fade-in", style: { marginTop: "14px" } },
+          h("h3", { text: `🔁 Review: ${missed.length} to revisit`, style: { marginTop: 0 } }),
+          missed.map((q) => h("div", { class: "q-review" }, h("p", { class: "q", html: q.q }), q.code ? h("pre", { text: q.code }) : null,
+            h("p", { html: `<b>✅ ${q.options[q.answer]}</b>` }), q.explain ? h("p", { class: "why", html: q.explain }) : null))) : null));
     }
     render();
   }

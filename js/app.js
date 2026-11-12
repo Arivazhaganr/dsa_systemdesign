@@ -6,7 +6,14 @@
   const nav = document.getElementById("nav");
   const xpbar = document.getElementById("xpbar");
   const sidebar = document.querySelector(".sidebar");
-  const TRACKS = { dsa: "Data Structures & Algorithms", sd: "System Design" };
+  const TRACKS = { dsa: "Data Structures & Algorithms", sd: "System Design", ml: "Machine Learning", ai: "AI & LLMs" };
+  const SHORT = { dsa: "DSA", sd: "System design", ml: "ML", ai: "AI" };
+  const PRACTICE_INTRO = {
+    dsa: "Interview-style problems. Try each one yourself first (search the name on LeetCode or NeetCode), then reveal the hint and the approach.",
+    sd: "Design exercises. Sketch your answer on paper first, then compare with the outline.",
+    ml: "Hands-on exercises. Work each one out on paper or in a notebook (NumPy / scikit-learn / PyTorch) first, then reveal the hint and the approach.",
+    ai: "Think-and-build exercises. Sketch or code your answer first, then compare with the approach.",
+  };
   const byId = (id) => L.topics.find((t) => t.id === id);
   const go = (hash) => (location.hash = hash);
 
@@ -36,12 +43,14 @@
     const mastered = L.topics.filter((t) => Store.mastered(t.id)).length;
     const qCount = L.topics.reduce((a, t) => a + t.quiz.length, 0);
     main.append(h("div", { class: "hero fade-in" },
-      h("h1", { text: "Learn DSA & System Design by seeing it 👀" }),
+      h("h1", { text: "Learn DSA, System Design, ML & AI by seeing it 👀" }),
       h("p", { text: `${L.topics.length} topics, each with a short lesson, an interactive visualizer you can play step by step, a quiz (${qCount} questions in total) and interview-style practice problems. Earn XP, keep a streak, and master every topic.` }),
       h("div", { class: "controls" },
         h("button", { class: "btn primary", text: "▶ Start with Big-O", onclick: () => go("#/t/big-o") }),
         h("button", { class: "btn", text: "🎲 Daily challenge (10 mixed questions)", onclick: () => go("#/challenge/all") }),
-        h("button", { class: "btn", text: "🏗️ Jump to System Design", onclick: () => go("#/t/sd-basics") })),
+        h("button", { class: "btn", text: "🏗️ Jump to System Design", onclick: () => go("#/t/sd-basics") }),
+        h("button", { class: "btn", text: "🤖 Jump to Machine Learning", onclick: () => go("#/t/ml-basics") }),
+        h("button", { class: "btn", text: "✨ Jump to AI & LLMs", onclick: () => go("#/t/ai-landscape") })),
       h("div", { class: "stats" },
         h("div", { class: "stat" }, h("b", { text: Store.data.xp }), h("span", { text: "XP" })),
         h("div", { class: "stat" }, h("b", { text: Store.level() }), h("span", { text: "level" })),
@@ -51,7 +60,7 @@
       const list = L.topics.filter((t) => t.track === k);
       const done = list.filter((t) => Store.mastered(t.id)).length;
       main.append(h("div", { class: "controls", style: { marginTop: "10px" } }, h("h2", { text: name, style: { margin: 0 } }), h("span", { class: "badge", text: `${done}/${list.length} mastered` }), h("div", { class: "spacer" }),
-        h("button", { class: "btn small", text: `🎲 ${k === "dsa" ? "DSA" : "System design"} quiz`, onclick: () => go(`#/challenge/${k}`) })),
+        h("button", { class: "btn small", text: `🎲 ${SHORT[k]} quiz`, onclick: () => go(`#/challenge/${k}`) })),
         h("div", { class: "meter", style: { marginBottom: "14px" } }, h("i", { style: { width: (done / list.length) * 100 + "%" } })),
         h("div", { class: "grid", style: { marginBottom: "30px" } }, list.map((t, i) => {
           const q = Store.data.quiz[t.id];
@@ -60,12 +69,15 @@
             q ? h("span", { class: "badge " + (Store.mastered(t.id) ? "good" : ""), text: `${Store.mastered(t.id) ? "★ " : ""}${q.best}/${q.total}` }) : null);
         })));
     });
-    main.append(h("div", { class: "card" }, h("h3", { text: "🗺️ Suggested 4-week plan", style: { marginTop: 0 } }),
+    main.append(h("div", { class: "card" }, h("h3", { text: "🗺️ Suggested 7-week plan", style: { marginTop: 0 } }),
       h("div", { class: "learn", html: `<ol>
 <li><b>Week 1, foundations:</b> Big-O, Arrays & Two Pointers, Sliding Window, Binary Search, Sorting, Hashing.</li>
 <li><b>Week 2, structures:</b> Linked Lists, Stacks & Queues, Trees & BST, Heaps, Tries, Recursion & Backtracking.</li>
-<li><b>Week 3, algorithms + SD basics:</b> Graphs, Dijkstra, DP, Greedy · Interview framework, Load balancing, Caching, Databases.</li>
-<li><b>Week 4, system design:</b> Consistent hashing, CAP, Queues, Rate limiting, CDN, APIs, Reliability, then the three case studies.</li></ol>
+<li><b>Week 3, algorithms:</b> Graphs, Dijkstra, Topological sort, Union-Find & MST, DP, Greedy, Bit manipulation, String matching, Range queries, Bloom filters.</li>
+<li><b>Week 4, system design building blocks:</b> Interview framework, Load balancing, Caching, Databases, Storage engines, Consistent hashing, CAP, Consensus, Queues, Distributed transactions, Rate limiting, CDN, APIs, Auth & security, Reliability, Observability.</li>
+<li><b>Week 5, system design case studies:</b> URL shortener, News feed, Chat, Video streaming, Ride sharing, Payments.</li>
+<li><b>Week 6, machine learning:</b> What is ML, Linear regression & gradient descent, Classification, Overfitting, Decision trees, K-means, Neural networks, Model evaluation.</li>
+<li><b>Week 7, AI & LLMs:</b> AI landscape, Search (A*), Reinforcement learning, Embeddings, Tokenization, Transformers, LLM generation, RAG, Agents.</li></ol>
 <p>Each day: read the lesson (10 min) → play with the visualizer (10 min) → take the quiz → solve 1–2 practice problems on your favourite judge (LeetCode, NeetCode, etc.).</p>` })));
   }
 
@@ -99,10 +111,11 @@
     } else if (tab === "quiz") {
       Quiz(body, t.quiz, { id, onDone: () => go(`#/t/${id}/practice`) });
     } else {
-      body.append(h("p", { class: "topic-sub", text: t.track === "dsa" ? "Interview-style problems. Try each one yourself first (search the name on LeetCode or NeetCode), then reveal the hint and the approach." : "Design exercises. Sketch your answer on paper first, then compare with the outline." }));
+      body.append(h("p", { class: "topic-sub", text: PRACTICE_INTRO[t.track] }));
       t.practice.forEach((p) => {
         const mk = (label, text) => { const r = h("div", { class: "reveal" }, h("button", { class: "btn small", text: label, onclick: () => r.classList.toggle("open") }), h("div", { class: "body", html: text })); return r; };
-        body.append(h("div", { class: "card prob" }, h("h3", null, p.name, h("span", { class: "badge " + p.diff, text: p.diff })), p.desc ? h("p", { text: p.desc }) : null,
+        body.append(h("div", { class: "card prob" }, h("h3", null, p.name, h("span", { class: "badge " + p.diff, text: p.diff }),
+            t.track === "dsa" && t.links !== false ? h("a", { class: "badge", href: "https://leetcode.com/problemset/?search=" + encodeURIComponent(p.name), target: "_blank", rel: "noopener noreferrer", text: "🔗 Find on LeetCode" }) : null), p.desc ? h("p", { text: p.desc }) : null,
           h("div", { class: "controls", style: { margin: 0, alignItems: "flex-start" } }, mk("💡 Hint", p.hint), mk("✅ Approach", p.sol))));
       });
     }
@@ -142,7 +155,7 @@
       pre.innerHTML = highlight(code[k], k);
     }
     copy.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(code[lang]).then(() => L.toast("Copied!")); };
-    body.append(h("p", { class: "topic-sub", text: "The same idea in four languages. Your language choice is remembered across topics." }), bar, pre);
+    body.append(h("p", { class: "topic-sub", text: `The same idea in ${LANGS.filter(([key]) => code[key]).map(([, name]) => name).join(", ").replace(/, ([^,]*)$/, " and $1")}. Your language choice is remembered across topics.` }), bar, pre);
     show(lang);
   }
 
